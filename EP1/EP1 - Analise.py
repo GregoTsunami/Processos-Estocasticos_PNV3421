@@ -25,6 +25,7 @@ from scipy import stats
 from scipy.stats import norm, expon, lognorm, gamma, weibull_min, skew, kurtosis
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import os 
 import time
 from datetime import datetime
@@ -55,9 +56,10 @@ df['Tempo_Atracado'] = ( (df['Data_Desatracacao'] - df['Data_Atracacao']).dt.tot
 
 dados = df[['Tempo_Espera', 'Tempo_Operacao', 'Tempo_Atracado']].dropna()
 
-
+print(50*'_')
 print("Dados de interesse")
 print(dados.describe())
+
 
 # Análise dos Outliers
 def outliers(df, coluna):
@@ -145,6 +147,8 @@ def estatisticas_basicas (serie, nome):
     
     return pd.DataFrame(resultados)
 
+
+# Visualização dos dados
 print(50*'_')
 print("\n --- Estatísticas Básicas | Tempo de Espera ---")
 estatisticas_espera = estatisticas_basicas(dados_clear['Tempo_Espera'], 'Tempo_Espera')
@@ -154,10 +158,36 @@ print("\n --- Estatísticas Básicas | Tempo de Operação ---")
 estatisticas_operacao = estatisticas_basicas(dados_clear['Tempo_Operacao'], 'Tempo_Operacao')
 print(estatisticas_operacao)
 
-# Visualização dos dados
+
+# Box Plot e Histogramas
+fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+sns.boxplot(data=df[['Tempo_Espera', 'Tempo_Operacao']], ax=axes[0,0])
+axes[0,0].set_title('Boxplot dos Dados Originais')
+axes[0,0].legend()
+
+sns.boxplot(data=dados_clear, ax=axes[0,1])
+axes[0,1].set_title('Boxplot dos Dados sem Outliers')
+axes[0,1].legend()
+
+dados_clear['Tempo_Espera'].hist(bins=30, ax=axes[1,0], alpha = 0.7, color = 'blue')
+axes[1,0].axvline(lim_espera[0], color='r', linestyle='--', label='Limite Inferior')
+axes[1,0].axvline(lim_espera[1], color='r', linestyle='--', label='Limite Superior')
+axes[1,0].set_title("Histograma do Tempo de Espera (s/ outlier)")
+axes[1,0].legend()
+
+dados_clear['Tempo_Operacao'].hist(bins=30, ax=axes[1,1], alpha = 0.7, color = 'orange')
+axes[1,1].axvline(lim_operacao[0], color='r', linestyle='--', label='Limite Inferior')
+axes[1,1].axvline(lim_operacao[1], color='r', linestyle='--', label='Limite Superior')
+axes[1,1].set_title("Histograma do Tempo de Operação (s/ outlier)")
+axes[1,1].legend()
+
+plt.tight_layout()
+plt.show()
 
 
 # Testes de Aderência
+
 
 
 # Testes de distribuições estatísticas
