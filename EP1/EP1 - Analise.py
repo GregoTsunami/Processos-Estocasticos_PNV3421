@@ -22,7 +22,7 @@ Created on Fri Sep 12 12:04:25 2025
 import pandas as pd
 import scipy as scp
 from scipy import stats
-from scipy.stats import norm, expon, lognorm, gamma, weibull_min, skew, kurtosis
+from scipy.stats import norm, expon, uniform, gamma, lognorm, weibull_min, beta, skew, kurtosis
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -186,8 +186,97 @@ plt.tight_layout()
 plt.show()
 
 
-# Testes de Aderência
+# Testes de Aderência e Distribuições
+def teste_distribuicoes(dados, coluna):
+    values = dados[coluna].dropna()
+    
+    distribuicoes = [
+        ('Normal', norm),
+        ('Exponencial', expon),
+        ('Uniforme', uniform),
+        ('Gama', gamma),
+        ('Log-Normal', lognorm),
+        ('Weibull', weibull_min),
+        ('Beta', beta)
+    ]
+    
+    results = []
+    
+    for nome, dist in distribuicoes:
+        try:
+            if nome == 'Beta':
+                min_val = values.min()
+                max_val = values.max()
+                values_norm = (values - min_val) / (max_val - min_val)
+                params = dist.fit(values_norm, floc = 0, fscale = 1)
+                
+                # Kolmogorov - Smirnov c normalização
+                D, p_value = stats.kstest(values_norm, dist.name, args=params)
+                
+            else:
+                params = dist.fit(values)
+                
+                # Kolmogorov - Smirnov
+                D, p_value = stats.kstest(values, dist.name, args= params)
+            
+            results.append(
+                {
+                    'Distribuição': nome,
+                    'Estatísticas KS': D,
+                    'p_value': p_value
+                }
+            )
+                
+        except Exception as e:
+            print(f'Erro no teste de {nome}: {e}')
+            continue
+        
+    return pd.DataFrame(results)
+
+print(50*'_')
+
+print("\n Testes de Aderência | Tempo de Espera")
+results_espera = teste_distribuicoes(dados_clear, 'Tempo_Espera')
+print(results_espera)
+
+print("\n Testes de Aderência | Tempo de Operação")
+results_operacao = teste_distribuicoes(dados_clear, 'Tempo_Operacao')
+print(results_operacao)
 
 
-
-# Testes de distribuições estatísticas
+# Histograma dos testes
+def plot_distribuicoes(dados, coluna):
+    values = dados[coluna].dropna()
+    plt.figure(figsize=(16,10))
+    
+    plt.hist(values, bins = 30, density = True, alpha = 0.6, color='g', label='Dados')
+    
+    x = np.linspace(values.min(), values.max(), 100)
+    
+    params_norm = norm.fit(values)
+    plt.plot(x, norm.pdf(x, *params_norm), 'r-', label='Normal', linewidth=2)
+    
+    params_expon = expon.fit(values)
+    plt.plot(x, expon.pdf(x, *params_expon), 'b-', label='Exponencial', linewidth=2)
+    
+    params_uniform = uniform.fit(values)
+    plt.plot(x, uniform.pdf(x, *params_uniform), 'y-', label='Uniforme', linewidth=2)
+    
+    params_gamma = gamma.fit(values)
+    plt.plot(x, gamma.pdf(x, *params_gamma), 'm-', label='Gama', linewidth=2)
+    
+    params_lognorm = lognorm.fit(values)
+    plt.plot(x, lognorm.pdf(x, *params_lognorm), 'c-', label='Log-Normal', linewidth=2)
+    
+    params_weibull = weibull_min.fit(values)
+    plt.plot(x, weibull_min.pdf(x, *params_weibull), 'k-', label='Weibull', linewidth=2)
+    
+    plt.title(f'Ajuste de Distribuições - {coluna}')
+    plt.xlabel('Tempo (h)')
+    plt.ylabel('Densidade')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.show()
+    
+plot_distribuicoes(dados_clear, 'Tempo_Espera')
+plot_distribuicoes(dados_clear, 'Tempo_Operacao')
