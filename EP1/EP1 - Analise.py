@@ -31,7 +31,7 @@ import time
 from datetime import datetime
 
 #%% Importando os dados
-df = pd.read_excel('Base de Dados.xlsx', sheet_name='Planilha3', skiprows=1)
+df = pd.read_excel('Base de Dados.xlsx', sheet_name='Tubarao', skiprows=1)
 
 print(df.info())
 print(df.describe())
